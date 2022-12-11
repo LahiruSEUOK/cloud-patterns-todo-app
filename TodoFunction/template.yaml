@@ -1,0 +1,46 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Transform: AWS::Serverless-2016-10-31
+Description: >
+
+Globals:
+  Function:
+    Timeout: 600
+
+Resources:
+  TodoApi:
+    Type: AWS::Serverless::Api
+    Properties:
+      StageName: dev
+      BinaryMediaTypes: ["*/*"]
+
+  TodoFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: todo/
+      Handler: lambda.handler
+      Runtime: nodejs18.x
+      MemorySize: 512
+      Events:
+        TodoFunctionProxy:
+          Type: Api
+          Properties:
+            RestApiId: !Ref TodoApi
+            Path: "/{proxy+}"
+            Method: ANY
+        TodoFunctionRoot:
+          Type: Api
+          Properties:
+            RestApiId: !Ref TodoApi
+            Path: "/"
+            Method: ANY
+
+Outputs:
+  TodoFunctiondApi:
+    Description: "API Gateway endpoint URL for dev stage for Auth function"
+    Value: !Sub "https://${TodoApi}.execute-api.${AWS::Region}.amazonaws.com/dev/"
+  TodoFunction:
+    Description: "Todo Lambda Function ARN"
+    Value: !GetAtt TodoFunction.Arn
+  TodoFunctionIamRole:
+    Description: "Implicit IAM Role created for Todo's function"
+    Value: !GetAtt TodoFunctionRole.Arn
